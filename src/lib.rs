@@ -1,17 +1,19 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+#![recursion_limit = "256"]
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+use serde_derive::Deserialize;
+use wasm_bindgen::prelude::*;
+use yew::format::{Json, Nothing};
+use yew::html;
+use yew::prelude::*;
+use yew::services::{
+    fetch::{FetchService, FetchTask, Request, Response},
+    ConsoleService,
+};
+use yew_router::{components::RouterAnchor, router::Router, Switch};
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+mod todo;
+
+pub type Anchor = RouterAnchor<AppRoute>;
 
 struct TodoApp {
     link: ComponentLink<Self>,
@@ -19,18 +21,26 @@ struct TodoApp {
     fetch_task: Option<FetchTask>,
 }
 
-#[derive(Deserialize, Clone, PartialEq, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Todo {
-pub user_id: u64,
-pub id: u64,
-pub title: String,
-pub completed: bool,
-}
-
 enum Msg {
     MakeReq,
     Resp(Result<Vec<Todo>, anyhow::Error>),
+}
+
+#[derive(Switch, Clone, Debug)]
+pub enum AppRoute {
+    #[to = "/todo/{id}"]
+    Detail(i32),
+    #[to = "/"]
+    Home,
+}
+
+#[derive(Deserialize, Clone, PartialEq, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Todo {
+    pub user_id: u64,
+    pub id: u64,
+    pub title: String,
+    pub completed: bool,
 }
 
 impl Component for TodoApp {
@@ -56,18 +66,18 @@ impl Component for TodoApp {
                 let cb = self.link.callback(
                     |response: Response<Json<Result<Vec<Todo>, anyhow::Error>>>| {
                         let Json(data) = response.into_body();
-                        Msg:Resp(data)
+                        Msg: Resp(data)
                     },
                 );
 
-                let task = FetchService::fetch(req, cb).expect("can create task")
+                let task = FetchService::fetch(req, cb).expect("can create task");
                 self.fetch_task = Some(task);
                 ()
             }
             Msg::Resp(resp) => {
                 if let Ok(data) = resp {
                     self.todos = Some(data);
-                }                
+                }
             }
         }
         true
@@ -77,19 +87,42 @@ impl Component for TodoApp {
         false
     }
 
-    fn view(&Self) -> Html {
+    fn view(&self) -> Html {
         let todos = self.todos.clone();
         let cb = self.link.callback(|_| Msg::MakeReq);
         ConsoleService::info(&format!("render TodoApp: {:?}", todos));
         html! {
             <div class=classes!("todo")>
-                <div>
-                    <div class=classes!("refresh")>
-                        <button onclick=cb.clone()>
-                            {"refresh"}
-                        </button>
-                    </div>
-                    <todo::list::List todos=todos.clone()/>
+                <div class=classes!("nav")>
+                    <Anchor route=AppRoute::Home>{"Home"}</Anchor>
+                </div>
+                <div class=classes!("content")>
+                    <Router<AppRoute, ()>
+                        render = Router::render(move |switch: AppRoute| {
+                            match switch {
+                                AppRoute::Detail(todo_id) => {
+                                    html! {
+                                        <div>
+                                            <todo::detail::Detail todo_id=todo_id/>
+                                        </div>
+                                    }
+                                }
+                                AppRoute::Home => {
+                                    html! {
+                                        <div>
+                                            <div class=classes!("refresh")>
+                                                <button onclick=cb.clone()>
+                                                    {"refresh"}
+                                                </button>
+                                            </div>
+                                            <todo::list::List todos=todos.clone()/>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            }
+                        })
+                    />
                 </div>
             </div>
         }
@@ -98,5 +131,5 @@ impl Component for TodoApp {
 
 #[wasm_bindgen(start)]
 pub fn run_app() {
-    App::<TodoApp>::new().mount_to_body(;
+    App::<TodoApp>::new().mount_to_body();
 }
