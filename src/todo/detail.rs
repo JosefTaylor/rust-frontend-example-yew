@@ -25,16 +25,16 @@ impl Detail {
                     Some("not-completed")
                 };
                 html! {
-                  <div class=classes!("detail")>
-                    <h1>{&t.title}{" ("}<span class=classes!("id"){t.id}</span>{")"}</h1>
-                    <div>{"by user "}{t.user_id}</div>
-                    <div class=classes!(completed)>{if t.completed { "done" } else { "not done"}}</div>
-                  </div>
+                    <div class=classes!("detail")>
+                        <h1>{&t.title}{" ("}<span class=classes!("id")>{t.id}</span>{")"}</h1>
+                        <div>{"by user "}{t.user_id}</div>
+                        <div class=classes!(completed)>{if t.completed { "done" } else { "not done" }}</div>
+                    </div>
                 }
             }
             None => {
                 html! {
-                  <div class=classes!("loading")>{"loading..."}</div>
+                    <div class=classes!("loading")>{"loading..."}</div>
                 }
             }
         }
