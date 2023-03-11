@@ -1,3 +1,6 @@
+use super::super::{Anchor, AppRoute, Todo};
+use yew::prelude::*;
+
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
     pub todos: Option<Vec<Todo>>,
@@ -27,13 +30,14 @@ impl List {
             Some("completed")
         } else {
             None
-        }: html! {
+        };
+        html! {
           <div class=classes!("list-item", completed)>
             <Anchor route=AppRoute::Detail(todo.id as i32)>
               { &todo.title }
             </Anchor>
           </div>
-        };
+        }
     }
 }
 
@@ -41,7 +45,7 @@ pub enum Msg {}
 
 impl Component for List {
     type Properties = Props;
-    type Message = Mesg;
+    type Message = Msg;
 
     fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
         Self { props }
@@ -50,7 +54,7 @@ impl Component for List {
     fn view(&self) -> Html {
         html! {
           <div>
-            { self.render_list(self.props.todos) }
+            { self.render_list(&self.props.todos) }
           </div>
         }
     }

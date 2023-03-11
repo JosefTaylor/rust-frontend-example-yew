@@ -66,7 +66,7 @@ impl Component for TodoApp {
                 let cb = self.link.callback(
                     |response: Response<Json<Result<Vec<Todo>, anyhow::Error>>>| {
                         let Json(data) = response.into_body();
-                        Msg: Resp(data)
+                        Msg::Resp(data)
                     },
                 );
 
@@ -116,7 +116,6 @@ impl Component for TodoApp {
                                                 </button>
                                             </div>
                                             <todo::list::List todos=todos.clone()/>
-                                            </div>
                                         </div>
                                     }
                                 }
